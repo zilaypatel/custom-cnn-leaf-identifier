@@ -38,16 +38,24 @@ The deep learning model achieves high classification accuracy (**91.1%** test ac
 
 ### 2.2 Image Preprocessing & Augmentation Pipeline
 
-1. **Spatial Resizing**: All input images are standardized to **$128 \times 128 \times 3$** (RGB).
+1. **Spatial Resizing**: All input images are standardized to **128 × 128 × 3** (RGB).
 2. **Min-Max Rescaling**: Pixel values are normalized from $[0, 255]$ to the interval $[0.0, 1.0]$:
-   $$x_{\text{norm}} = \frac{x}{255.0}$$
+
+   $$
+   x_{\text{norm}} = \frac{x}{255.0}
+   $$
+
 3. **Data Augmentation**: To improve model generalization and prevent overfitting on minority classes, the training pipeline applies:
    - Random Horizontal Flip
    - Random Rotation ($\pm 15\%$)
    - Random Brightness adjustment ($\pm 15\%$)
    - Random Zoom ($\pm 10\%$)
 4. **Class Weighting & Balancing**: The training pipeline calculates inverse class frequency weights:
-   $$w_c = \frac{N_{\text{total}}}{K \cdot N_c}$$
+
+   $$
+   w_c = \frac{N_{\text{total}}}{K \cdot N_c}
+   $$
+
    Where $N_{\text{total}}$ is total images, $K$ is the number of classes (5), and $N_c$ is the image count for class $c$. This ensures minority classes (`money`, `Mango`, `Tulsi`) exert proportional gradient influence.
 
 ---
@@ -95,17 +103,17 @@ Input Image (128x128x3)
 
 | Layer Type | Filter / Units | Kernel / Pool Size | Activation | Output Shape | Parameters |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **InputLayer** | — | — | — | $(128, 128, 3)$ | 0 |
-| **Conv2D** | 32 | $3 \times 3$ | ReLU | $(126, 126, 32)$ | 896 |
-| **MaxPooling2D**| — | $2 \times 2$ | — | $(63, 63, 32)$ | 0 |
-| **Conv2D** | 64 | $3 \times 3$ | ReLU | $(61, 61, 64)$ | 18,496 |
-| **MaxPooling2D**| — | $2 \times 2$ | — | $(30, 30, 64)$ | 0 |
-| **Conv2D** | 128 | $3 \times 3$ | ReLU | $(28, 28, 128)$ | 73,856 |
-| **MaxPooling2D**| — | $2 \times 2$ | — | $(14, 14, 128)$ | 0 |
-| **Flatten** | — | — | — | $(25088)$ | 0 |
-| **Dense** | 256 | — | ReLU | $(256)$ | 6,422,784 |
-| **Dropout** | rate = 0.5 | — | — | $(256)$ | 0 |
-| **Dense** | 5 | — | Softmax | $(5)$ | 1,285 |
+| **InputLayer** | — | — | — | (128, 128, 3) | 0 |
+| **Conv2D** | 32 | 3 × 3 | ReLU | (126, 126, 32) | 896 |
+| **MaxPooling2D**| — | 2 × 2 | — | (63, 63, 32) | 0 |
+| **Conv2D** | 64 | 3 × 3 | ReLU | (61, 61, 64) | 18,496 |
+| **MaxPooling2D**| — | 2 × 2 | — | (30, 30, 64) | 0 |
+| **Conv2D** | 128 | 3 × 3 | ReLU | (28, 28, 128) | 73,856 |
+| **MaxPooling2D**| — | 2 × 2 | — | (14, 14, 128) | 0 |
+| **Flatten** | — | — | — | (25,088) | 0 |
+| **Dense** | 256 | — | ReLU | (256) | 6,422,784 |
+| **Dropout** | rate = 0.5 | — | — | (256) | 0 |
+| **Dense** | 5 | — | Softmax | (5) | 1,285 |
 | **Total Parameters** | **13,872,707** (Trainable: 13,872,707 / Non-trainable: 0) | | | | |
 
 ---
@@ -114,26 +122,45 @@ Input Image (128x128x3)
 
 #### 1. Two-Dimensional Discrete Convolution
 For input feature map $X$ and kernel weight matrix $K$ of size $M \times N$:
-$$S(i, j) = (X * K)(i, j) = \sum_{m=0}^{M-1} \sum_{n=0}^{N-1} X(i - m, j - n) \cdot K(m, n) + b$$
+
+$$
+S(i, j) = (X * K)(i, j) = \sum_{m=0}^{M-1} \sum_{n=0}^{N-1} X(i - m, j - n) \cdot K(m, n) + b
+$$
 
 #### 2. Rectified Linear Unit (ReLU) Activation
 Introduces non-linearity to capture complex leaf venation geometry:
-$$f(z) = \max(0, z)$$
+
+$$
+f(z) = \max(0, z)
+$$
 
 #### 3. Spatial Max Pooling
 Downsamples spatial dimensions while preserving translational invariance:
-$$P(i, j) = \max_{(m, n) \in \Omega} X(2i + m, 2j + n), \quad \Omega = \{0, 1\} \times \{0, 1\}$$
+
+$$
+P(i, j) = \max_{(m, n) \in \Omega} X(2i + m, 2j + n), \quad \Omega = \{0, 1\} \times \{0, 1\}
+$$
 
 #### 4. Inverted Dropout Regularization
 Prevents co-adaptation of neurons during training by randomly zeroing activations with probability $p = 0.5$:
-$$\widetilde{y} = \frac{1}{1 - p} (y \odot m), \quad m_i \sim \text{Bernoulli}(1 - p)$$
+
+$$
+\widetilde{y} = \frac{1}{1 - p} (y \odot m), \quad m_i \sim \text{Bernoulli}(1 - p)
+$$
 
 #### 5. Softmax Multi-Class Probability Distribution
 Converts raw logit scores $z_i$ into a normalized probability distribution over the 5 botanical classes:
-$$\sigma(z)_i = \frac{e^{z_i}}{\sum_{j=1}^{5} e^{z_j}}, \quad \sum_{i=1}^{5} \sigma(z)_i = 1.0$$
+
+$$
+\sigma(z)_i = \frac{e^{z_i}}{\sum_{j=1}^{5} e^{z_j}}, \quad \sum_{i=1}^{5} \sigma(z)_i = 1.0
+$$
 
 #### 6. Categorical Cross-Entropy Loss Objective
-$$\mathcal{L}_{CE} = - \sum_{i=1}^{5} y_i \log(\hat{y}_i)$$
+
+$$
+\mathcal{L}_{\text{CE}} = - \sum_{i=1}^{5} y_i \log(\hat{y}_i)
+$$
+
 where $y_i \in \{0, 1\}$ is the one-hot ground truth label and $\hat{y}_i$ is the predicted probability.
 
 ---
