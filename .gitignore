@@ -1,0 +1,47 @@
+# Virtual Environment
+.venv/
+venv/
+ENV/
+env/
+ENV*/
+
+# Large Archives & Raw Backups (Exceeds GitHub limits)
+*.zip
+*.tar
+*.tar.gz
+*.rar
+*.7z
+
+# Python Bytecode & Compilation Cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Jupyter Notebook Checkpoints
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/*
+
+# System & OS Files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+# IDE & Editor Configuration
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Environment & Credentials
+.env
+.env.local
+
+# Local Logs & Temp Dumps
+*.log
+scratch/
+tmp/
